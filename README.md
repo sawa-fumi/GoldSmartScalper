@@ -2,7 +2,7 @@
 
 GOLD (XAUUSD) scalping signal indicator for MetaTrader 5.
 
-## v1.0.0 target environment
+## Target environment
 
 - Platform: MT5
 - Broker baseline: Vantage
@@ -11,34 +11,71 @@ GOLD (XAUUSD) scalping signal indicator for MetaTrader 5.
 - Intended chart timeframes: M1 to M5
 - Signal timing: closed candles only (no signal on candle 0)
 
-## v1.0.0 logic
+## v1.1.0
 
-A BUY/SELL arrow is allowed only after the enabled filters agree:
+`GoldSmartScalper_v1.1.0.mq5` keeps the v1.0.0 base logic but changes the higher-timeframe treatment so M1-M5 scalping can optionally ignore H1/H4 direction.
+
+### Main changes
+
+- Higher-timeframe filtering is optional.
+- Default `Use_HTF_Trend_Filter = false` for scalping.
+- `Trade_Only_Trend_Direction` can restrict signals to H1/H4 direction when desired.
+- `HTF_Mismatch_Mode`
+  - 0 = ignore mismatch
+  - 1 = soft penalty
+  - 2 = block mismatch
+- Counter-trend signals relative to H1/H4 are drawn separately.
+- BUY trend = blue arrow.
+- SELL trend = red arrow.
+- BUY counter-trend = aqua arrow.
+- SELL counter-trend = magenta arrow.
+- Signal strength scoring (0-100) is used as a threshold gate.
+- `Signal_Strength_Threshold` controls normal signals.
+- `Counter_Trend_Min_Score` controls counter-trend signals.
+- MA breakthrough block remains optional.
+- ATR low-volatility / spike block, ADX, RSI, EMA slope and BOS remain active.
+
+### Recommended scalping start settings
+
+- `Use_HTF_Trend_Filter = false`
+- `Trade_Only_Trend_Direction = false`
+- `HTF_Mismatch_Mode = 0`
+- `Signal_Strength_Threshold = 50`
+- `Counter_Trend_Min_Score = 45`
+- `UseSessionFilter = false` initially
+
+This setup allows M1-M5 conditions to generate a short signal even while H1/H4 are still bullish, which is the behavior requested after the first v1.0.0 chart test.
+
+### Trend-following setup
+
+If you prefer stronger higher-timeframe alignment:
+
+- `Use_HTF_Trend_Filter = true`
+- `Trade_Only_Trend_Direction = true`
+- `HTF_Mismatch_Mode = 2`
+- raise signal thresholds if you want fewer signals
+
+## v1.0.0
+
+`GoldSmartScalper_v1.0.0.mq5` is preserved as the first stable base version.
+
+Its main filters are:
 
 - EMA 20 / 50 / 100 / 200 structure
 - EMA20 slope (angle proxy)
-- Price position relative to EMA20/EMA50
-- H1 trend filter (EMA50 vs EMA200 + price position)
-- H4 trend filter (EMA50 vs EMA200 + price position)
+- price position
+- H1/H4 filters
 - ATR abnormal-volatility filter
-  - blocks unusually low volatility
-  - blocks ATR spikes
 - ADX minimum-strength filter
 - RSI overheat filter
 - BOS breakout confirmation
-- Large EMA20 body-cross breakthrough block
-- Optional London / New York session filter
-- Popup / Push / Sound alerts
-
-## Important v1.0.0 defaults
-
-The session filter is **OFF by default** because MT5 broker server time can vary and daylight-saving time changes London/New York alignment. First verify signals with it OFF. We can calibrate Vantage server time after observing the platform clock.
-
-The indicator uses the current chart symbol, so attach it to the Vantage XAUUSD chart. Symbol capitalization is not hard-coded.
+- large EMA20 body-cross breakthrough block
+- optional London / New York session filter
+- popup / push / sound alerts
 
 ## Install in MT5
 
-1. Download `GoldSmartScalper_v1.0.0.mq5`.
+1. Download the desired `.mq5` file.
 2. In MT5 choose `File > Open Data Folder`.
 3. Open `MQL5 > Indicators`.
 4. Copy the `.mq5` file there.
@@ -49,23 +86,23 @@ The indicator uses the current chart symbol, so attach it to the Vantage XAUUSD 
 
 ## Push notification
 
-In MT5, configure `Tools > Options > Notifications` first. The input `EnablePushNotification` only sends through MT5 after the terminal itself is configured.
+In MT5, configure `Tools > Options > Notifications` first. `EnablePushNotification` only sends through MT5 after the terminal itself is configured.
 
-## First test requested
+## Test request for v1.1.0
 
 Please report:
 
 - MetaEditor compile result: errors / warnings
-- M1: approximate number of arrows in one London + New York session
-- M5: approximate number of arrows
-- whether arrows appear too late / too often / too rarely
-- screenshot of 2-3 good signals and 2-3 bad signals
+- whether the previously missed short area now receives a magenta counter-trend SELL signal
+- M1 signal frequency during London and New York
+- whether arrows are too early / late / frequent / rare
+- screenshots of good and bad signals
 
-Do not use v1.0.0 as an automated trading system. It is a signal indicator and needs forward testing before live-risk decisions.
+This is a signal indicator, not an automated trading system. Forward-test before using it for live-risk decisions.
 
 ## Planned next steps
 
-- v1.0.1: fix compile/runtime issues and tune signal frequency
-- v1.1.0: FVG confirmation
-- v1.2.0: Order Block confirmation
-- later: signal scoring / statistics
+- v1.1.x: tune thresholds and signal frequency from forward-test results
+- v1.2.0: add FVG confirmation
+- v1.3.0: add Order Block confirmation
+- later: statistics / richer score display
