@@ -5,78 +5,60 @@ GOLD (XAUUSD) scalping signal indicator for MetaTrader 5.
 ## Target environment
 
 - Platform: MT5
-- Broker baseline: Vantage
-- Account baseline: Standard
+- Broker baseline: Vantage Standard
 - Symbol baseline: XAUUSD / xauusd
 - Intended chart timeframes: M1 to M5
-- Signal timing: closed candles only (no signal on candle 0)
 
-## v1.1.0
+## v1.2.0 — faster signal timing
 
-`GoldSmartScalper_v1.1.0.mq5` keeps the v1.0.0 base logic but changes the higher-timeframe treatment so M1-M5 scalping can optionally ignore H1/H4 direction.
+`GoldSmartScalper_v1.2.0.mq5` focuses on reducing the delay seen in v1.1.0 while keeping signals on closed candles only.
 
-### Main changes
+### Early Signal modes
 
-- Higher-timeframe filtering is optional.
-- Default `Use_HTF_Trend_Filter = false` for scalping.
-- `Trade_Only_Trend_Direction` can restrict signals to H1/H4 direction when desired.
-- `HTF_Mismatch_Mode`
-  - 0 = ignore mismatch
-  - 1 = soft penalty
-  - 2 = block mismatch
-- Counter-trend signals relative to H1/H4 are drawn separately.
-- BUY trend = blue arrow.
-- SELL trend = red arrow.
-- BUY counter-trend = aqua arrow.
-- SELL counter-trend = magenta arrow.
-- Signal strength scoring (0-100) is used as a threshold gate.
-- `Signal_Strength_Threshold` controls normal signals.
-- `Counter_Trend_Min_Score` controls counter-trend signals.
-- MA breakthrough block remains optional.
-- ATR low-volatility / spike block, ADX, RSI, EMA slope and BOS remain active.
+- `Early_Signal_Mode = 0` — v1.1-style confirmed close breakout. Slowest / strictest.
+- `Early_Signal_Mode = 1` — Normal early mode. A wick break can qualify before a full close BOS. Default.
+- `Early_Signal_Mode = 2` — Aggressive early mode. Can also qualify a strong momentum candle approaching the breakout level. Fastest, but more false signals are expected.
 
-### Recommended scalping start settings
+### New parameters
 
+- `Min_Break_Pips = 3.0` — minimum wick breakout beyond the prior range.
+- `Pullback_Max_Pips = 8.0` — maximum close-back distance allowed after a wick breakout.
+- `Momentum_Acceleration_Use = true` — enables momentum acceleration for Aggressive mode.
+- `ATR_Change_Ratio_Threshold = 0.15` — ATR acceleration threshold.
+- `Aggressive_NearBreak_Pips = 4.0` — how close price can be to the prior swing level in Aggressive mode.
+
+### Important design choice
+
+v1.2.0 does **not** draw signals on the currently forming candle. This intentionally avoids the easiest source of repainting. The speed improvement comes from earlier breakout logic on the latest closed candle rather than waiting only for a close beyond the BOS level.
+
+### Recommended first test
+
+Start with:
+
+- `Early_Signal_Mode = 1`
 - `Use_HTF_Trend_Filter = false`
 - `Trade_Only_Trend_Direction = false`
 - `HTF_Mismatch_Mode = 0`
 - `Signal_Strength_Threshold = 50`
 - `Counter_Trend_Min_Score = 45`
-- `UseSessionFilter = false` initially
+- `UseSessionFilter = false`
 
-This setup allows M1-M5 conditions to generate a short signal even while H1/H4 are still bullish, which is the behavior requested after the first v1.0.0 chart test.
+If signals are still late, test `Early_Signal_Mode = 2`. If mode 2 produces too many false signals, return to mode 1 before changing other filters.
 
-### Trend-following setup
+## v1.1.0
 
-If you prefer stronger higher-timeframe alignment:
+`GoldSmartScalper_v1.1.0.mq5` keeps the v1.0.0 base logic but makes H1/H4 filtering optional so M1-M5 scalping can take short-term counter-trend setups.
 
-- `Use_HTF_Trend_Filter = true`
-- `Trade_Only_Trend_Direction = true`
-- `HTF_Mismatch_Mode = 2`
-- raise signal thresholds if you want fewer signals
+Main additions include optional HTF direction filtering, separate trend/counter-trend arrows, signal-score thresholds, and HTF mismatch handling.
 
 ## v1.0.0
 
-`GoldSmartScalper_v1.0.0.mq5` is preserved as the first stable base version.
-
-Its main filters are:
-
-- EMA 20 / 50 / 100 / 200 structure
-- EMA20 slope (angle proxy)
-- price position
-- H1/H4 filters
-- ATR abnormal-volatility filter
-- ADX minimum-strength filter
-- RSI overheat filter
-- BOS breakout confirmation
-- large EMA20 body-cross breakthrough block
-- optional London / New York session filter
-- popup / push / sound alerts
+`GoldSmartScalper_v1.0.0.mq5` is preserved as the first stable base version with EMA structure, H1/H4 filters, ATR, ADX, RSI, EMA slope, BOS, MA breakthrough block, optional sessions, and alerts.
 
 ## Install in MT5
 
 1. Download the desired `.mq5` file.
-2. In MT5 choose `File > Open Data Folder`.
+2. MT5: `File > Open Data Folder`.
 3. Open `MQL5 > Indicators`.
 4. Copy the `.mq5` file there.
 5. Open MetaEditor (F4).
@@ -86,23 +68,10 @@ Its main filters are:
 
 ## Push notification
 
-In MT5, configure `Tools > Options > Notifications` first. `EnablePushNotification` only sends through MT5 after the terminal itself is configured.
+Configure `Tools > Options > Notifications` in MT5 first. `EnablePushNotification` sends only after the terminal notification setup is complete.
 
-## Test request for v1.1.0
+## v1.2.0 test request
 
-Please report:
-
-- MetaEditor compile result: errors / warnings
-- whether the previously missed short area now receives a magenta counter-trend SELL signal
-- M1 signal frequency during London and New York
-- whether arrows are too early / late / frequent / rare
-- screenshots of good and bad signals
+Please report the MetaEditor errors/warnings result, then compare v1.1.0 and v1.2.0 on the same XAUUSD M1 section. The most useful feedback is whether v1.2.0 enters 1–3 candles earlier, whether the first move is captured better, and whether false signals increase.
 
 This is a signal indicator, not an automated trading system. Forward-test before using it for live-risk decisions.
-
-## Planned next steps
-
-- v1.1.x: tune thresholds and signal frequency from forward-test results
-- v1.2.0: add FVG confirmation
-- v1.3.0: add Order Block confirmation
-- later: statistics / richer score display
